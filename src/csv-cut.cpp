@@ -32,24 +32,10 @@ std::list<std::size_t> fieldSelection(std::string_view const& fieldSelectionStr)
 	return result;
 }
 
-int main(int argc, char* argv[])
+template<char OutputDelimiter>
+void cut(csv::CSVReader& reader, std::list<std::size_t> const& fieldIndices)
 {
-	cxxopts::Options options("csv_cut", "Cut fields from CSV input");
-
-	options.add_options()("h,help", "Print usage")("d,delimiter", "Input delimiter", cxxopts::value<char>()->default_value(","))(
-		"f,fields", "Comma separated list of fields", cxxopts::value<std::string>()->default_value(""));
-
-	cxxopts::ParseResult option{options.parse(argc, argv)};
-	if (option.count("help")) {
-		std::cout << options.help() << std::endl;
-		exit(0);
-	}
-
-	char delimiter{option["delimiter"].as<char>()};
-
-	std::list<std::size_t> fieldIndices{fieldSelection(option["fields"].as<std::string>())};
-	csv::CSVReader reader{std::cin, csv::CSVFormat().no_header().quote(true).delimiter(delimiter)};
-	csv::DelimWriter writer{csv::make_csv_writer(std::cout)};
+	csv::DelimWriter<std::ostream, OutputDelimiter, '"', true> writer(std::cout);
 	for (csv::CSVRow& row : reader) {
 		std::list<std::string_view> fieldViews;
 		for (std::size_t fieldIndex : fieldIndices) {
@@ -57,5 +43,56 @@ int main(int argc, char* argv[])
 		}
 		writer << fieldViews;
 	}
+}
+
+int main(int argc, char* argv[])
+{
+	cxxopts::Options options("csv-cut", "Cut fields from CSV input");
+
+	options.add_options()("h,help", "Print usage")("d,delimiter", "Input delimiter [\\t,:;|]", cxxopts::value<char>()->default_value(","))(
+		"f,fields", "Comma separated list of fields", cxxopts::value<std::string>()->default_value(""))(
+		"output-delimiter", "Output delimiter [\\t,:;|] (default: same as input delimiter)", cxxopts::value<char>());
+
+	cxxopts::ParseResult option{options.parse(argc, argv)};
+	if (option.count("help")) {
+		std::cout << options.help() << std::endl;
+		exit(0);
+	}
+
+	const char delimiter{option["delimiter"].as<char>()};
+	const char outputDelimiter{option.count("output-delimiter") ? option["output-delimiter"].as<char>() : delimiter};
+
+	csv::CSVReader reader{std::cin, csv::CSVFormat().no_header().quote(true).delimiter(delimiter)};
+
+	switch (delimiter) {
+	case ('\t'):
+	case (','):
+	case (':'):
+	case (';'):
+	case ('|'):
+		switch (outputDelimiter) {
+		case ('\t'):
+			cut<'\t'>(reader, fieldSelection(option["fields"].as<std::string>()));
+			break;
+		case (','):
+			cut<','>(reader, fieldSelection(option["fields"].as<std::string>()));
+			break;
+		case (':'):
+			cut<':'>(reader, fieldSelection(option["fields"].as<std::string>()));
+			break;
+		case (';'):
+			cut<';'>(reader, fieldSelection(option["fields"].as<std::string>()));
+			break;
+		case ('|'):
+			cut<'|'>(reader, fieldSelection(option["fields"].as<std::string>()));
+			break;
+		default:
+			throw(std::runtime_error("Invalid output delimiter"));
+		}
+		break;
+	default:
+		throw(std::runtime_error("Invalid input delimiter"));
+	}
+
 	return 0;
 }
