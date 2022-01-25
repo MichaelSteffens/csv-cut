@@ -28,8 +28,8 @@ Unlike cut(0), input is parsed and output is formatted according to [RFC4180](ht
 
 : Output delimiter \[\\t,:;|\] (default: same as input delimiter)
 
-CREDITS
--------
+SEE ALSO
+--------
 
 cvs-cut makes use of header libraries provided in the include directory:
 
