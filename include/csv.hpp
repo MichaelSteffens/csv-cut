@@ -6129,14 +6129,14 @@ namespace csv {
             StreamParser(TStream& source,
                 const CSVFormat& format,
                 const ColNamesPtr& col_names = nullptr
-            ) : IBasicCSVParser(format, col_names), _source(source) {};
+            ) : IBasicCSVParser(format, col_names), _source(std::move(source)) {};
 
             StreamParser(
                 TStream& source,
                 internals::ParseFlagMap parse_flags,
                 internals::WhitespaceMap ws_flags) :
                 IBasicCSVParser(parse_flags, ws_flags),
-                _source(source)
+                _source(std::move(source))
             {};
 
             ~StreamParser() {}
@@ -6181,7 +6181,7 @@ namespace csv {
             }
 
         private:
-            TStream& _source;
+            TStream _source;
             size_t stream_pos = 0;
         };
 
