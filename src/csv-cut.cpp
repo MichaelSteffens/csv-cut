@@ -14,7 +14,6 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <unistd.h> //DEBUG
 
 std::list<std::size_t> fieldSelection(std::string_view const& fieldSelectionStr)
 {
@@ -41,8 +40,6 @@ void cut(csv::CSVReader& reader, std::list<std::size_t> const& fieldIndices)
 {
 	csv::DelimWriter<std::ostream, OutputDelimiter, '"', true> writer(std::cout);
 	for (csv::CSVRow& row : reader) {
-		std::cerr << "row[0].get<std::string_view>(): '" << row[0].get<std::string_view>() << "'" << std::endl; // DEBUG
-		std::cerr << "row[1].get<std::string_view>(): '" << row[1].get<std::string_view>() << "'" << std::endl; // DEBUG
 		std::list<std::string_view> fieldViews;
 		for (std::size_t fieldIndex : fieldIndices) {
 			fieldViews.emplace_back(row[fieldIndex].get<std::string_view>());
